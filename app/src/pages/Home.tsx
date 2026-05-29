@@ -4,12 +4,9 @@ import { useNavigate } from 'react-router-dom';
 
 import ConnectionIndicator from '../components/ConnectionIndicator';
 import {
-  DiscordBanner,
-  EarlyBirdyBanner,
   PromotionalCreditsBanner,
   UsageLimitBanner,
 } from '../components/home/HomeBanners';
-import { dismissBanner, shouldShowBanner } from '../components/upsell/upsellDismissState';
 import { useUsageState } from '../hooks/useUsageState';
 import { useUser } from '../hooks/useUser';
 import { useT } from '../lib/i18n/I18nContext';
@@ -45,6 +42,10 @@ export function resolveHomeUserName(user: unknown): string {
   return 'User';
 }
 
+export function buildHomeWelcomeVariants(userName: string): string[] {
+  return [`欢迎，${userName} 👋`, `开始吧，${userName} 🧑‍🍳`, '进入专注模式 🧘🏻'];
+}
+
 const Home = () => {
   const { t } = useT();
   const { user } = useUser();
@@ -57,20 +58,7 @@ const Home = () => {
     user?.subscription?.plan === 'FREE' || !user?.subscription?.hasActiveSubscription;
   const showPromoBanner = isFreeTier && promoCredits > 0.01;
 
-  // Early birdy banner: once dismissed it stays gone (cooldown longer than any realistic session).
-  const [showEarlyBirdy, setShowEarlyBirdy] = useState(() =>
-    shouldShowBanner('home-earlybirdy', Number.MAX_SAFE_INTEGER)
-  );
-
-  const handleDismissEarlyBirdy = () => {
-    dismissBanner('home-earlybirdy');
-    setShowEarlyBirdy(false);
-  };
-
-  const welcomeVariants = useMemo(
-    () => [`Welcome, ${userName} 👋`, `Let's cook, ${userName} 🧑‍🍳.`, `Time to Zone In 🧘🏻`],
-    [userName]
-  );
+  const welcomeVariants = useMemo(() => buildHomeWelcomeVariants(userName), [userName]);
   const [welcomeVariantIndex, setWelcomeVariantIndex] = useState(0);
   const [typedWelcome, setTypedWelcome] = useState('');
   const [isDeletingWelcome, setIsDeletingWelcome] = useState(false);
@@ -314,10 +302,6 @@ const Home = () => {
             </svg>
           </button>
         )}
-
-        {showEarlyBirdy && <EarlyBirdyBanner onDismiss={handleDismissEarlyBirdy} />}
-
-        <DiscordBanner />
 
         {/* Next steps — compact directory of where to go next */}
         {/* <div className="mt-3 bg-white rounded-2xl shadow-soft border border-stone-200 p-4">
