@@ -76,7 +76,35 @@ else
   echo "[run-dev-win] WARNING: cmd.exe not found at '$cmd_exe_for_path' — Windows PATH restoration skipped; node/cargo may be missing downstream" >&2
 fi
 
-export LIBCLANG_PATH="/c/Program Files/LLVM/bin"
+# bindgen runs inside a native Windows cargo/rustc process, so hand it a
+# Windows-style directory containing libclang.dll. Prefer an explicit caller
+# value, then fall back to common LLVM install locations.
+if [[ -n "${LIBCLANG_PATH:-}" ]]; then
+  if [[ "$LIBCLANG_PATH" == /* ]]; then
+    export LIBCLANG_PATH="$(cygpath -w "$LIBCLANG_PATH" 2>/dev/null || printf '%s' "$LIBCLANG_PATH")"
+  else
+    export LIBCLANG_PATH
+  fi
+else
+  for clang_dir in \
+      "/c/Program Files/LLVM/bin" \
+      "/c/Program Files (x86)/LLVM/bin" \
+      "/f/LLVM/bin"; do
+    if [[ -f "$clang_dir/libclang.dll" ]]; then
+      export LIBCLANG_PATH="$(cygpath -w "$clang_dir" 2>/dev/null || printf '%s' "$clang_dir")"
+      break
+    fi
+  done
+fi
+echo "[run-dev-win] LIBCLANG_PATH = ${LIBCLANG_PATH:-<unset>}"
+
+# MSVC accepts both /utf-8 and -utf-8, but Git Bash/MSYS can rewrite /utf-8
+# as a path when it reaches native Windows tools through the CL environment.
+# Use the dash form to avoid that path conversion while still fixing C4819.
+if [[ -z "${CL:-}" || "$CL" == "/utf-8" ]]; then
+  export CL="-utf-8"
+fi
+echo "[run-dev-win] CL = ${CL:-<unset>}"
 
 # Bootstrap the MSVC C++ build environment in this shell so cl.exe / link.exe /
 # Windows SDK headers are reachable without launching the "x64 Native Tools
