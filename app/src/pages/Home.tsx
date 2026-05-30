@@ -3,10 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import ConnectionIndicator from '../components/ConnectionIndicator';
-import {
-  PromotionalCreditsBanner,
-  UsageLimitBanner,
-} from '../components/home/HomeBanners';
+import { PromotionalCreditsBanner, UsageLimitBanner } from '../components/home/HomeBanners';
 import { useUsageState } from '../hooks/useUsageState';
 import { useUser } from '../hooks/useUser';
 import { useT } from '../lib/i18n/I18nContext';
